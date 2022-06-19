@@ -1,0 +1,82 @@
+—
+
+– name: check ios facts
+  hosts: CSR1kv
+  gather_facts: false
+  connection: local
+ 
+
+  tasks:
+    - name: run show version on remote devices
+      cisco.ios.ios_command:
+        commands: show version
+
+    - name: run show version and check to see if output contains IOS
+      cisco.ios.ios_command:
+        commands: show version
+        wait_for: result[0] contains IOS
+
+    - name: run multiple commands on remote nodes
+        cisco.ios.ios_command:
+         commands:
+         - show version
+         - show interfaces
+
+    - name: run multiple commands and evaluate the output
+        cisco.ios.ios_command:
+        commands:
+        - show version
+        - show interfaces
+        wait_for:
+        - result[0] contains IOS
+        - result[1] contains Loopback0
+
+    - name: run commands that require answering a prompt
+        cisco.ios.ios_command:
+        commands:
+        - command: 'clear counters GigabitEthernet0/1'
+          prompt: 'Clear "show interface" counters on this interface \[confirm\]'
+          answer: 'y'
+        - command: 'clear counters GigabitEthernet0/2'
+          answer: "\r"
+
+- name: configure host logging
+  cisco.ios.ios_logging:
+    dest: host
+    name: 172.16.0.1
+    state: present
+
+- name: remove host logging configuration
+  cisco.ios.ios_logging:
+    dest: host
+    name: 172.16.0.1
+    state: absent
+
+- name: configure console logging level and facility
+  cisco.ios.ios_logging:
+    dest: console
+    facility: local7
+    level: debugging
+    state: present
+
+- name: enable logging to all
+  cisco.ios.ios_logging:
+    dest: on
+
+- name: configure buffer size
+  cisco.ios.ios_logging:
+    dest: buffered
+    size: 5000
+
+- name: Configure logging using aggregate
+  cisco.ios.ios_logging:
+    aggregate:
+    - {dest: console, level: notifications}
+    - {dest: buffered, size: 9000}
+
+- name: remove logging using aggregate
+  cisco.ios.ios_logging:
+    aggregate:
+    - {dest: console, level: notifications}
+    - {dest: buffered, size: 9000}
+    state: absent
